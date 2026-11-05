@@ -1,5 +1,17 @@
 # @cloudflare/vitest-plugin
 
+## 1.6.1
+
+### Patch Changes
+
+- [#16699](https://github.com/cloudflare/workers-sdk/pull/16699) [`cd24b27`](https://github.com/cloudflare/workers-sdk/commit/cd24b27915cce9493b73f3e3a884629c948f56da) Thanks [@matingathani](https://github.com/matingathani)! - Fix `vi.mock()` factories failing under Vitest 5.1
+
+  Mock factories in `vi.mock()` now work when running tests with Vitest 5.1 and later. Previously, any test file that used a mock factory failed during import with `asyncLocalStorage.disable() is not implemented`.
+
+- Updated dependencies [[`dee7a1d`](https://github.com/cloudflare/workers-sdk/commit/dee7a1d7e9b5641cb077e5a91c7f36ea98f1e9a1), [`cff83d0`](https://github.com/cloudflare/workers-sdk/commit/cff83d0220b51c7cfdf422bcd5091a8fbea76d81), [`4112820`](https://github.com/cloudflare/workers-sdk/commit/41128206d0158bce2243bec7bd59fa7efc563aaf), [`cff83d0`](https://github.com/cloudflare/workers-sdk/commit/cff83d0220b51c7cfdf422bcd5091a8fbea76d81), [`9b6582c`](https://github.com/cloudflare/workers-sdk/commit/9b6582cc911b04de667d0055eabd513813d8b634), [`4112820`](https://github.com/cloudflare/workers-sdk/commit/41128206d0158bce2243bec7bd59fa7efc563aaf)]:
+  - wrangler@4.159.0
+  - miniflare@5.20261104.0-beta
+
 ## 1.6.0
 
 ### Minor Changes
