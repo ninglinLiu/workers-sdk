@@ -17,6 +17,9 @@ class AccountSelectionUnavailable extends Error {
 	}
 }
 
+// Pool workers and watch-mode reruns share these for the life of the process.
+const authByProfileDir = new Map<string, CloudflareAuth>();
+
 /**
  * Set up cf authentication using the profile associated with `profileDir`.
  */
@@ -72,6 +75,15 @@ function createAuth(profileDir: string, logger: Logger): CloudflareAuth {
 	return auth;
 }
 
+function getAuth(profileDir: string, logger: Logger): CloudflareAuth {
+	let auth = authByProfileDir.get(profileDir);
+	if (!auth) {
+		auth = createAuth(profileDir, logger);
+		authByProfileDir.set(profileDir, auth);
+	}
+	return auth;
+}
+
 /**
  * Get the cf credentials for a `cloudflare.config.ts` remote bindings session.
  *
@@ -86,11 +98,9 @@ export function getRemoteBindingsAuth(
 	accountId: string | undefined,
 	logger: Logger
 ): RemoteBindingsAuth {
-	let auth: CloudflareAuth | undefined;
 	return {
 		hook: async () => {
-			// Only resolve the profile once a session actually needs credentials
-			auth ??= createAuth(profileDir, logger);
+			const auth = getAuth(profileDir, logger);
 			return {
 				accountId: await auth.requireAuth(
 					accountId ? { account_id: accountId } : {}

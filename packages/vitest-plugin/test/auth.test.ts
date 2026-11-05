@@ -1,4 +1,5 @@
 import assert from "node:assert";
+import { createCfAuth } from "@cloudflare/workers-auth/cf";
 import { test, vi } from "vitest";
 import { getRemoteBindingsAuth } from "../src/pool/auth";
 import type { AuthContext } from "@cloudflare/workers-auth/cf";
@@ -20,10 +21,10 @@ vi.mock("@cloudflare/cli-shared-helpers/interactive", () => ({
 }));
 
 vi.mock("@cloudflare/workers-auth/cf", () => ({
-	createCfAuth: (context: AuthContext) => {
+	createCfAuth: vi.fn((context: AuthContext) => {
 		mocks.authContext = context;
 		return mocks.cfAuth;
-	},
+	}),
 	createCfProfileStore: () => ({ resolve: mocks.resolveProfile }),
 }));
 
@@ -31,6 +32,32 @@ vi.mock("@cloudflare/workers-utils", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@cloudflare/workers-utils")>()),
 	isNonInteractiveOrCI: () => false,
 }));
+
+test("remote bindings sessions share auth by profile directory", async ({
+	expect,
+}) => {
+	vi.mocked(createCfAuth).mockClear();
+	const logger: Logger = {
+		debug: vi.fn(),
+		log: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
+		error: vi.fn(),
+	};
+	const first = getRemoteBindingsAuth("/shared-project", undefined, logger);
+	const second = getRemoteBindingsAuth("/shared-project", undefined, logger);
+	assert(typeof first.hook === "function");
+	assert(typeof second.hook === "function");
+
+	expect(createCfAuth).not.toHaveBeenCalled();
+	await Promise.all([first.hook(), second.hook()]);
+	expect(createCfAuth).toHaveBeenCalledOnce();
+
+	const other = getRemoteBindingsAuth("/other-project", undefined, logger);
+	assert(typeof other.hook === "function");
+	await other.hook();
+	expect(createCfAuth).toHaveBeenCalledTimes(2);
+});
 
 test("account selection explains how to configure the account", async ({
 	expect,
